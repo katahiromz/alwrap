@@ -2,43 +2,75 @@
 // by Katayama Hirofumi MZ <katayama.hirofumi.mz@gmail.com>.
 // This file is public domain software (PDS).
 #ifndef ALWRAP_H
-#define ALWRAP_H
+#define ALWRAP_H            4   // Version 4
+
+#define AL_NO_PROTOTYPES    1
 
 #if defined(_MSC_VER)
-#include <alc.h>
-#include <al.h>
+    #include <alc.h>
+    #include <al.h>
 #elif defined(__APPLE__)
-#include <OpenAL/alc.h>
-#include <OpenAL/al.h>
+    #include <OpenAL/alc.h>
+    #include <OpenAL/al.h>
 #else
-#include <AL/al.h>
-#include <AL/alc.h>
+    #include <AL/al.h>
+    #include <AL/alc.h>
 #endif
+
+#ifdef _WIN32
 
 struct AlWrap
 {
     AlWrap()
     {
-        memset(this, 0, sizeof(*this));
+        ZeroMemory(this, sizeof(*this));
+    }
+
+    ~AlWrap()
+    {
+        Unload();
+    }
+
+    bool Load(const char *pszFileName)
+    {
+        if (m_hAL != NULL)
+            return true;
+
+        return Load(::LoadLibraryA(pszFileName));
+    }
+
+    bool Load(const wchar_t *pszFileName)
+    {
+        if (m_hAL != NULL)
+            return true;
+
+        return Load(::LoadLibraryW(pszFileName));
+    }
+
+    void Unload()
+    {
+        if (m_hAL)
+            ::FreeLibrary(m_hAL);
+
+        ZeroMemory(this, sizeof(*this));
     }
 
     template <typename TYPE>
     bool GetAddr(TYPE& fn, const char *name)
     {
-        FARPROC fn = ::GetProcAddress(m_hInst, name);
-        fn = (TYPE)fn;
+        fn = (TYPE)::GetProcAddress(m_hAL, name);
         return fn != NULL;
     }
 
-    bool Load()
+    bool Load(HINSTANCE hInstance)
     {
-        if (m_hInst != NULL)
+        if (m_hAL != NULL)
             return true;
 
-        m_hInst = ::LoadLibraryA("OpenAL32.dll");
-        if (m_hInst == NULL)
+        if (hInstance == NULL)
             return false;
 
+        m_hAL = hInstance;
         if (GetAddr(m_alEnable, "alEnable") &&
             GetAddr(m_alDisable, "alDisable") &&
             GetAddr(m_alIsEnabled, "alIsEnabled") &&
@@ -111,7 +143,27 @@ struct AlWrap
             GetAddr(m_alDopplerFactor, "alDopplerFactor") &&
             GetAddr(m_alDopplerVelocity, "alDopplerVelocity") &&
             GetAddr(m_alSpeedOfSound, "alSpeedOfSound") &&
-            GetAddr(m_alDistanceModel, "alDistanceModel"))
+            GetAddr(m_alDistanceModel, "alDistanceModel") &&
+            GetAddr(m_alcCreateContext, "alcCreateContext") &&
+            GetAddr(m_alcMakeContextCurrent, "alcMakeContextCurrent") &&
+            GetAddr(m_alcProcessContext, "alcProcessContext") &&
+            GetAddr(m_alcSuspendContext, "alcSuspendContext") &&
+            GetAddr(m_alcDestroyContext, "alcDestroyContext") &&
+            GetAddr(m_alcGetCurrentContext, "alcGetCurrentContext") &&
+            GetAddr(m_alcGetContextsDevice, "alcGetContextsDevice") &&
+            GetAddr(m_alcOpenDevice, "alcOpenDevice") &&
+            GetAddr(m_alcCloseDevice, "alcCloseDevice") &&
+            GetAddr(m_alcGetError, "alcGetError") &&
+            GetAddr(m_alcIsExtensionPresent, "alcIsExtensionPresent") &&
+            GetAddr(m_alcGetProcAddress, "alcGetProcAddress") &&
+            GetAddr(m_alcGetEnumValue, "alcGetEnumValue") &&
+            GetAddr(m_alcGetString, "alcGetString") &&
+            GetAddr(m_alcGetIntegerv, "alcGetIntegerv") &&
+            GetAddr(m_alcCaptureOpenDevice, "alcCaptureOpenDevice") &&
+            GetAddr(m_alcCaptureCloseDevice, "alcCaptureCloseDevice") &&
+            GetAddr(m_alcCaptureStart, "alcCaptureStart") &&
+            GetAddr(m_alcCaptureStop, "alcCaptureStop") &&
+            GetAddr(m_alcCaptureSamples, "alcCaptureSamples"))
         {
             return true;
         }
@@ -120,19 +172,9 @@ struct AlWrap
         return false;
     }
 
-    void Unload()
-    {
-        ::FreeLibrary(m_hInst);
-        memset(this, 0, sizeof(*this));
-    }
+    HINSTANCE                   m_hAL;
 
-    ~AlWrap()
-    {
-        Unload();
-    }
-
-    HINSTANCE                   m_hInst;
-
+    // al
     LPALENABLE                  m_alEnable;
     LPALDISABLE                 m_alDisable;
     LPALISENABLED               m_alIsEnabled;
@@ -206,9 +248,31 @@ struct AlWrap
     LPALDOPPLERVELOCITY         m_alDopplerVelocity;
     LPALSPEEDOFSOUND            m_alSpeedOfSound;
     LPALDISTANCEMODEL           m_alDistanceModel;
-};
 
-inline AlWrap *GetAlWrap(void)
+    // alc
+    LPALCCREATECONTEXT          m_alcCreateContext;
+    LPALCMAKECONTEXTCURRENT     m_alcMakeContextCurrent;
+    LPALCPROCESSCONTEXT         m_alcProcessContext;
+    LPALCSUSPENDCONTEXT         m_alcSuspendContext;
+    LPALCDESTROYCONTEXT         m_alcDestroyContext;
+    LPALCGETCURRENTCONTEXT      m_alcGetCurrentContext;
+    LPALCGETCONTEXTSDEVICE      m_alcGetContextsDevice;
+    LPALCOPENDEVICE             m_alcOpenDevice;
+    LPALCCLOSEDEVICE            m_alcCloseDevice;
+    LPALCGETERROR               m_alcGetError;
+    LPALCISEXTENSIONPRESENT     m_alcIsExtensionPresent;
+    LPALCGETPROCADDRESS         m_alcGetProcAddress;
+    LPALCGETENUMVALUE           m_alcGetEnumValue;
+    LPALCGETSTRING              m_alcGetString;
+    LPALCGETINTEGERV            m_alcGetIntegerv;
+    LPALCCAPTUREOPENDEVICE      m_alcCaptureOpenDevice;
+    LPALCCAPTURECLOSEDEVICE     m_alcCaptureCloseDevice;
+    LPALCCAPTURESTART           m_alcCaptureStart;
+    LPALCCAPTURESTOP            m_alcCaptureStop;
+    LPALCCAPTURESAMPLES         m_alcCaptureSamples;
+}; // struct AlWrap
+
+inline ALWRAP *GetAlWrap(void)
 {
     static AlWrap s_wrap;
     return &s_wrap;
@@ -288,4 +352,26 @@ inline AlWrap *GetAlWrap(void)
 #define alSpeedOfSound GetAlWrap()->m_alSpeedOfSound
 #define alDistanceModel GetAlWrap()->m_alDistanceModel
 
+#define alcCreateContext GetAlWrap()->m_alcCreateContext
+#define alcMakeContextCurrent GetAlWrap()->m_alcMakeContextCurrent
+#define alcProcessContext GetAlWrap()->m_alcProcessContext
+#define alcSuspendContext GetAlWrap()->m_alcSuspendContext
+#define alcDestroyContext GetAlWrap()->m_alcDestroyContext
+#define alcGetCurrentContext GetAlWrap()->m_alcGetCurrentContext
+#define alcGetContextsDevice GetAlWrap()->m_alcGetContextsDevice
+#define alcOpenDevice GetAlWrap()->m_alcOpenDevice
+#define alcCloseDevice GetAlWrap()->m_alcCloseDevice
+#define alcGetError GetAlWrap()->m_alcGetError
+#define alcIsExtensionPresent GetAlWrap()->m_alcIsExtensionPresent
+#define alcGetProcAddress GetAlWrap()->m_alcGetProcAddress
+#define alcGetEnumValue GetAlWrap()->m_alcGetEnumValue
+#define alcGetString GetAlWrap()->m_alcGetString
+#define alcGetIntegerv GetAlWrap()->m_alcGetIntegerv
+#define alcCaptureOpenDevice GetAlWrap()->m_alcCaptureOpenDevice
+#define alcCaptureCloseDevice GetAlWrap()->m_alcCaptureCloseDevice
+#define alcCaptureStart GetAlWrap()->m_alcCaptureStart
+#define alcCaptureStop GetAlWrap()->m_alcCaptureStop
+#define alcCaptureSamples GetAlWrap()->m_alcCaptureSamples
+
+#endif  // def _WIN32
 #endif  // ndef ALWRAP_H
