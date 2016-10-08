@@ -31,6 +31,11 @@ struct AlWrap
         Unload();
     }
 
+    bool Load()
+    {
+        return Load("OpenAL32.dll");
+    }
+
     bool Load(const char *pszFileName)
     {
         if (m_hAL != NULL)
