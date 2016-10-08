@@ -2,9 +2,14 @@
 // by Katayama Hirofumi MZ <katayama.hirofumi.mz@gmail.com>.
 // This file is public domain software (PDS).
 #ifndef ALWRAP_H
-#define ALWRAP_H            4   // Version 4
+#define ALWRAP_H            5   // Version 5
 
-#define AL_NO_PROTOTYPES    1
+#ifdef _WIN32
+    #ifndef _INC_WINDOWS
+        #include <windows.h>
+    #endif
+    #define AL_NO_PROTOTYPES    1
+#endif
 
 #if defined(_MSC_VER)
     #include <alc.h>
@@ -378,5 +383,45 @@ inline ALWRAP *GetAlWrap(void)
 #define alcCaptureStop GetAlWrap()->m_alcCaptureStop
 #define alcCaptureSamples GetAlWrap()->m_alcCaptureSamples
 
-#endif  // def _WIN32
+#else   // ndef _WIN32
+
+// dummy class for non-Windows OS
+struct AlWrap
+{
+    AlWrap()
+    {
+    }
+
+    ~AlWrap()
+    {
+    }
+
+    bool Load()
+    {
+        return true;
+    }
+
+    bool Load(const char *pszFileName)
+    {
+        return true;
+    }
+
+    bool Load(const wchar_t *pszFileName)
+    {
+        return true;
+    }
+
+    void Unload()
+    {
+    }
+};
+
+// dummy GetAlWrap for non-Windows
+inline ALWRAP *GetAlWrap(void)
+{
+    static AlWrap s_wrap;
+    return &s_wrap;
+}
+#endif  // ndef _WIN32
+
 #endif  // ndef ALWRAP_H
