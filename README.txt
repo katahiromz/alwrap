@@ -11,3 +11,9 @@ It can control the timing of loading/unloading the OpenAL.
     alEnable(...);
     ...
     GetAlWrap()->Unload();
+
+/////////////////////////////////////////////////////
+// Katayama Hirofumi MZ (katahiromz) [ANT]
+// Homepage     http://katahiromz.web.fc2.com/
+// E-Mail       katayama.hirofumi.mz@gmail.com
+/////////////////////////////////////////////////////
