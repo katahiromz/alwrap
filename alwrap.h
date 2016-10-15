@@ -2,7 +2,7 @@
 // by Katayama Hirofumi MZ <katayama.hirofumi.mz@gmail.com>.
 // This file is public domain software (PDS).
 #ifndef ALWRAP_H
-#define ALWRAP_H            5   // Version 5
+#define ALWRAP_H            6   // Version 6
 
 #ifdef _WIN32
     #ifndef _INC_WINDOWS
@@ -282,7 +282,7 @@ struct AlWrap
     LPALCCAPTURESAMPLES         m_alcCaptureSamples;
 }; // struct AlWrap
 
-inline ALWRAP *GetAlWrap(void)
+inline AlWrap *GetAlWrap(void)
 {
     static AlWrap s_wrap;
     return &s_wrap;
